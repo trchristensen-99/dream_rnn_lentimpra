@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Data files
+data/*.h5
+data/*.tar.gz
+data/data/
+
+# Results and outputs
+results/
+*.pth
+*.npy
+*.csv
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSH keys (if accidentally added)
+*.pem
+id_*
+
+# Temporary files
+*.tmp
+*.bak
+*.cache
