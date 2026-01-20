@@ -92,13 +92,32 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 2. Install Dependencies (GPU Only)
+### 2. Install Dependencies
+
+**Automatic Installation (Recommended):**
+
+The training script will automatically detect your CUDA driver version and install a compatible PyTorch build. You only need to install the other dependencies:
 
 ```bash
 pip install --upgrade pip
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
 ```
+
+**Manual Installation (Optional):**
+
+If you prefer to install PyTorch manually, you can do so based on your CUDA version:
+
+```bash
+# For CUDA 12.1
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# For CUDA 11.8
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+# For other versions, see https://pytorch.org/get-started/locally/
+```
+
+The script will verify compatibility and install the correct version if needed.
 
 ### 3. Verify Installation
 

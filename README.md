@@ -17,11 +17,15 @@ cd dream_rnn_lentimpra
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install --upgrade pip
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
 ```
 
-**Note**: For CPU-only or different CUDA versions, see [PyTorch installation guide](https://pytorch.org/get-started/locally/).
+**Note**: PyTorch installation is handled automatically by the training script. The script will:
+- Detect your CUDA driver version
+- Install a compatible PyTorch build automatically
+- Verify GPU availability before training
+
+If you prefer to install PyTorch manually, see [TRAINING_GUIDE.md](TRAINING_GUIDE.md).
 
 ### 3. Download Data
 
@@ -61,7 +65,7 @@ python train_DREAM_RNN_lentiMPRA.py \
     --gpu 0
 ```
 
-**Training Time**: ~2.5-4 hours on GPU, ~10-20 hours on CPU
+**Training Time**: ~2.5-4 hours on GPU (CPU training is not supported)
 
 ### 6. Evaluate a Trained Model on the Test Set
 
@@ -98,8 +102,14 @@ This tests:
 
 - Python 3.8+
 - **CUDA-capable GPU (required)** – the scripts will error if no GPU is available
-- PyTorch (CUDA build)
+- NVIDIA drivers installed
+- PyTorch (will be installed automatically with compatible CUDA version)
 - h5py, numpy, pandas, scipy, scikit-learn, pyyaml, tqdm
+
+**Automatic CUDA Detection**: The training and evaluation scripts automatically:
+- Detect your CUDA driver version
+- Install a compatible PyTorch build if needed
+- Verify GPU availability before running
 
 See `requirements.txt` for package versions.
 
