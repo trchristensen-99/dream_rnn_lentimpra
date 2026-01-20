@@ -42,10 +42,15 @@ except ImportError:
 
 class BHIFirstLayersBlock(nn.Module):
     """
-    First layer block from BHI team's DREAM-RNN implementation
-    Based on @DREAM_paper: "First layer block: Same as DREAM-CNN"
+    First layer block from BHI team's DREAM-RNN implementation.
+
+    Matches DREAM-CNN first layer block:
+    - Two Conv1D layers with kernel sizes 9 and 15
+    - 256 channels per Conv1D (512 total after concatenation)
+    - ReLU activation
+    - Dropout rate 0.2
     """
-    def __init__(self, in_channels=4, out_channels=320, seqsize=230, 
+    def __init__(self, in_channels=4, out_channels=512, seqsize=230,
                  kernel_sizes=[9, 15], pool_size=1, dropout=0.2):
         super(BHIFirstLayersBlock, self).__init__()
         self.out_channels = out_channels
@@ -71,10 +76,14 @@ class BHIFirstLayersBlock(nn.Module):
 
 class BHICoreBlock(nn.Module):
     """
-    Core layer block from BHI team's DREAM-RNN implementation
-    Based on @DREAM_paper: "Bi-LSTM with 320 hidden dimensions each (640 total) + CNN block"
+    Core layer block from BHI team's DREAM-RNN implementation.
+
+    Matches DREAM-RNN core description:
+    - Bi-LSTM with 320 hidden dimensions in each direction (640 total)
+    - Subsequent CNN block similar to first layer block (kernel sizes 9 and 15,
+      256 channels per Conv1D, ReLU, dropout 0.2)
     """
-    def __init__(self, in_channels=320, out_channels=320, seqsize=230,
+    def __init__(self, in_channels=512, out_channels=512, seqsize=230,
                  lstm_hidden_channels=320, kernel_sizes=[9, 15], pool_size=1,
                  dropout1=0.2, dropout2=0.5):
         super(BHICoreBlock, self).__init__()
@@ -113,10 +122,17 @@ class BHICoreBlock(nn.Module):
 
 class AutosomeFinalLayersBlock(nn.Module):
     """
-    Final layer block from @DREAM_paper tutorial
-    Based on @DREAM_paper: "Point-wise convolution + global average pooling + SoftMax"
+    Final layer block from @DREAM_paper tutorial.
+
+    Structural match to DREAM-CNN final block:
+    - Point-wise (1x1) convolution
+    - Channel-wise global average pooling
+    - Final dense layer
+
+    Note: We use a linear activation (Identity) instead of SoftMax because
+    the task is regression (activity / aleatoric) trained with MSE.
     """
-    def __init__(self, in_channels=320, seqsize=230):
+    def __init__(self, in_channels=512, seqsize=230):
         super(AutosomeFinalLayersBlock, self).__init__()
         self.pointwise_conv = nn.Conv1d(in_channels, 256, kernel_size=1, padding='same')
         self.global_avg_pool = nn.AdaptiveAvgPool1d(1)
@@ -137,9 +153,33 @@ class DREAM_RNN_LentiMPRA(nn.Module):
     """
     def __init__(self, in_channels=4, seqsize=230):
         super(DREAM_RNN_LentiMPRA, self).__init__()
-        self.first_block = BHIFirstLayersBlock(in_channels=in_channels, out_channels=320, seqsize=seqsize, kernel_sizes=[9, 15], pool_size=1, dropout=0.2)
-        self.core_block = BHICoreBlock(in_channels=self.first_block.out_channels, out_channels=320, seqsize=self.first_block.infer_outseqsize(), lstm_hidden_channels=320, kernel_sizes=[9, 15], pool_size=1, dropout1=0.2, dropout2=0.5)
-        self.final_block = AutosomeFinalLayersBlock(in_channels=self.core_block.out_channels, seqsize=self.core_block.infer_outseqsize())
+        # First layer block: two Conv1D layers with kernel sizes 9 and 15,
+        # 256 channels each (512 total), ReLU, dropout 0.2
+        self.first_block = BHIFirstLayersBlock(
+            in_channels=in_channels,
+            out_channels=512,
+            seqsize=seqsize,
+            kernel_sizes=[9, 15],
+            pool_size=1,
+            dropout=0.2,
+        )
+        # Core layer block: Bi-LSTM (320 hidden units per direction, 640 total),
+        # followed by CNN block similar to first layer block
+        self.core_block = BHICoreBlock(
+            in_channels=self.first_block.out_channels,
+            out_channels=512,
+            seqsize=self.first_block.infer_outseqsize(),
+            lstm_hidden_channels=320,
+            kernel_sizes=[9, 15],
+            pool_size=1,
+            dropout1=0.2,
+            dropout2=0.5,
+        )
+        # Final block: point-wise conv -> global average pool -> dense
+        self.final_block = AutosomeFinalLayersBlock(
+            in_channels=self.core_block.out_channels,
+            seqsize=self.core_block.infer_outseqsize(),
+        )
     
     def forward(self, x):
         x = self.first_block(x)
