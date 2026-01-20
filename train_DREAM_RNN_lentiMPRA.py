@@ -326,19 +326,22 @@ def main(args):
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python executable: {sys.executable}")
     
-    # Check and fix CUDA compatibility
+    # Check and fix CUDA compatibility (before using torch)
     print("\n=== Checking CUDA Compatibility ===")
-    if not check_and_fix_cuda_compatibility():
-        raise RuntimeError(
-            "CUDA GPU is required for training but was not detected or is incompatible. "
-            "The script attempted to fix compatibility issues automatically. "
-            "If problems persist, please check your NVIDIA driver and PyTorch installation."
-        )
+    cuda_fixed = check_and_fix_cuda_compatibility()
     
-    # Re-import torch after potential reinstall
-    import importlib
-    import torch
-    importlib.reload(torch)
+    # If PyTorch was reinstalled, we need to restart
+    if not cuda_fixed:
+        # Check if CUDA is actually available now (might have been fixed)
+        if torch.cuda.is_available():
+            cuda_fixed = True
+        else:
+            raise RuntimeError(
+                "CUDA GPU is required for training but was not detected or is incompatible.\n"
+                "The script attempted to fix compatibility issues automatically.\n"
+                "If PyTorch was reinstalled, please restart this script for changes to take effect.\n"
+                "If problems persist, please check your NVIDIA driver and PyTorch installation."
+            )
     
     if not torch.cuda.is_available():
         raise RuntimeError(

@@ -36,18 +36,27 @@ from cuda_utils import check_and_fix_cuda_compatibility
 def main(args: argparse.Namespace) -> None:
     print("=== Starting DREAM-RNN Evaluation ===")
     
-    # Check and fix CUDA compatibility
+    # Check and fix CUDA compatibility (before using torch)
     print("\n=== Checking CUDA Compatibility ===")
-    if not check_and_fix_cuda_compatibility():
+    cuda_fixed = check_and_fix_cuda_compatibility()
+    
+    # If PyTorch was reinstalled, we need to restart
+    if not cuda_fixed:
+        # Check if it's just a restart needed
+        try:
+            import torch
+            if torch.cuda.is_available():
+                cuda_fixed = True
+        except:
+            pass
+    
+    if not cuda_fixed:
         raise RuntimeError(
-            "CUDA GPU is required for evaluation but was not detected or is incompatible. "
-            "The script attempted to fix compatibility issues automatically. "
+            "CUDA GPU is required for evaluation but was not detected or is incompatible.\n"
+            "The script attempted to fix compatibility issues automatically.\n"
+            "If PyTorch was reinstalled, please restart this script for changes to take effect.\n"
             "If problems persist, please check your NVIDIA driver and PyTorch installation."
         )
-    
-    # Re-import torch after potential reinstall
-    import torch
-    importlib.reload(torch)
     
     if not torch.cuda.is_available():
         raise RuntimeError(

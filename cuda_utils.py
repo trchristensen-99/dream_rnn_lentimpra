@@ -169,16 +169,9 @@ def check_and_fix_cuda_compatibility() -> bool:
                                 check=True,
                             )
                             print(f"  ✓ PyTorch reinstalled for CUDA {driver_version}")
-                            # Re-import and check again
-                            import importlib
-                            importlib.reload(torch)
-                            if torch.cuda.is_available():
-                                print(f"  ✓ CUDA is now available!")
-                                return True
-                            else:
-                                print(f"  ✗ CUDA still not available after reinstall")
-                                print(f"    You may need to update your NVIDIA driver")
-                                return False
+                            print(f"  ⚠ Please restart the script for changes to take effect")
+                            print(f"    The new PyTorch installation requires a fresh Python process")
+                            return False  # Return False so user restarts
                         except subprocess.CalledProcessError as e:
                             print(f"  ✗ Failed to reinstall PyTorch: {e}")
                             print(f"    Please manually install PyTorch for CUDA {driver_version}:")
