@@ -23,22 +23,41 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 import torch
+import importlib
 
 from train_DREAM_RNN_lentiMPRA import (
     DREAM_RNN_LentiMPRA,
     load_lentiMPRA_data,
     evaluate_model,
 )
+from cuda_utils import check_and_fix_cuda_compatibility
 
 
 def main(args: argparse.Namespace) -> None:
-    # Set device (GPU only)
+    print("=== Starting DREAM-RNN Evaluation ===")
+    
+    # Check and fix CUDA compatibility
+    print("\n=== Checking CUDA Compatibility ===")
+    if not check_and_fix_cuda_compatibility():
+        raise RuntimeError(
+            "CUDA GPU is required for evaluation but was not detected or is incompatible. "
+            "The script attempted to fix compatibility issues automatically. "
+            "If problems persist, please check your NVIDIA driver and PyTorch installation."
+        )
+    
+    # Re-import torch after potential reinstall
+    import torch
+    importlib.reload(torch)
+    
     if not torch.cuda.is_available():
         raise RuntimeError(
-            "CUDA GPU is required for evaluation but was not detected. "
-            "Please install a CUDA-enabled PyTorch build and ensure a compatible NVIDIA driver."
+            "CUDA GPU is required for evaluation but was not detected after compatibility check. "
+            "Please ensure NVIDIA drivers are installed and PyTorch is built with CUDA support."
         )
+    
+    # Set device (GPU only)
     device = torch.device(f"cuda:{args.gpu}")
+    print(f"\n✓ CUDA is available")
     print(f"Using device: {device}")
 
     # Load data (we only need the test set, but reuse loader)

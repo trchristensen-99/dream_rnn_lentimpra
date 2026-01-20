@@ -28,6 +28,9 @@ import sys
 from tqdm import tqdm
 from scipy.stats import pearsonr, spearmanr
 
+# Import CUDA compatibility utilities
+from cuda_utils import check_and_fix_cuda_compatibility, get_cuda_driver_version
+
 # Try to import wandb, but make it optional
 try:
     import wandb
@@ -322,12 +325,28 @@ def main(args):
     print("=== Starting DREAM-RNN Training ===")
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python executable: {sys.executable}")
-    print(f"CUDA available: {torch.cuda.is_available()}")
+    
+    # Check and fix CUDA compatibility
+    print("\n=== Checking CUDA Compatibility ===")
+    if not check_and_fix_cuda_compatibility():
+        raise RuntimeError(
+            "CUDA GPU is required for training but was not detected or is incompatible. "
+            "The script attempted to fix compatibility issues automatically. "
+            "If problems persist, please check your NVIDIA driver and PyTorch installation."
+        )
+    
+    # Re-import torch after potential reinstall
+    import importlib
+    import torch
+    importlib.reload(torch)
+    
     if not torch.cuda.is_available():
         raise RuntimeError(
-            "CUDA GPU is required for training but was not detected. "
-            "Please install a CUDA-enabled PyTorch build and ensure a compatible NVIDIA driver."
+            "CUDA GPU is required for training but was not detected after compatibility check. "
+            "Please ensure NVIDIA drivers are installed and PyTorch is built with CUDA support."
         )
+    
+    print(f"\n✓ CUDA is available")
     print(f"CUDA device count: {torch.cuda.device_count()}")
     print(f"Using CUDA device index {args.gpu}: {torch.cuda.get_device_name(args.gpu)}")
     
