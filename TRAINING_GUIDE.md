@@ -17,7 +17,7 @@ This guide provides step-by-step instructions for training DREAM-RNN models on t
 ## Prerequisites
 
 - Python 3.8 or higher
-- Access to a GPU (recommended) or CPU
+- **CUDA-capable GPU (required)** – training and evaluation scripts require a GPU
 - ~2GB disk space for data
 - ~5GB disk space for models and outputs
 
@@ -92,21 +92,11 @@ python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-### 2. Install Dependencies
-
-#### For GPU (CUDA 12.1):
+### 2. Install Dependencies (GPU Only)
 
 ```bash
 pip install --upgrade pip
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
-```
-
-#### For CPU or Different CUDA Version:
-
-```bash
-pip install --upgrade pip
-pip install torch torchvision torchaudio
 pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
 ```
 
@@ -122,6 +112,20 @@ if torch.cuda.is_available():
     print(f'GPU device: {torch.cuda.get_device_name(0)}')
 "
 ```
+
+### 4. Optional: Environment Check Script
+
+Run the provided check script to validate your setup:
+
+```bash
+python check_env.py --data data/lentiMPRA_K562_activity_and_aleatoric_data.h5
+```
+
+This will report:
+- Python version
+- PyTorch version and CUDA availability
+- Detected GPUs
+- Basic checks on the lentiMPRA HDF5 data file
 
 ---
 
@@ -274,7 +278,7 @@ The `*_performance.csv` file contains:
 
 ## Troubleshooting
 
-### PyTorch Installation Issues
+### PyTorch / CUDA Installation Issues
 
 **Problem**: `ModuleNotFoundError: No module named 'torch._prims_common'`
 
@@ -316,13 +320,14 @@ nvidia-smi
 2. Use a smaller downsample ratio: `--downsample 0.1`
 3. Use a different GPU with more memory
 
-### Training is Slow
+### Training is Slow or Falls Back to CPU
+
+**Problem**: Training is extremely slow, or logs show `CUDA available: False`
 
 **Solutions**:
-1. Verify GPU is being used: Check that `CUDA available: True` in the output
-2. Use GPU if available: Ensure `--gpu 0` is set
-3. Check GPU utilization: `nvidia-smi` should show GPU usage during training
-4. If using CPU, expect 10-20 hours for full training
+1. Verify CUDA is available: ensure `CUDA available: True` is printed at startup
+2. If not, fix your CUDA/PyTorch installation (see issues above) – **CPU-only training is not supported by this script**
+3. Check GPU utilization: `nvidia-smi` should show usage during training
 
 ---
 

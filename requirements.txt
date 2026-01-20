@@ -1,9 +1,9 @@
 # DREAM-RNN Training Requirements
 # Install with: pip install -r requirements.txt
 
-# PyTorch (install separately based on your CUDA version)
+# PyTorch (install separately based on your CUDA version) - GPU REQUIRED
 # For CUDA 12.1: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-# For CPU: pip install torch torchvision torchaudio
+# CPU-only builds are NOT supported for this training script
 
 # Core dependencies
 h5py>=3.0.0

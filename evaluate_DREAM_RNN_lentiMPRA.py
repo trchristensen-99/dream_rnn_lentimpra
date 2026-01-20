@@ -32,8 +32,13 @@ from train_DREAM_RNN_lentiMPRA import (
 
 
 def main(args: argparse.Namespace) -> None:
-    # Set device
-    device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
+    # Set device (GPU only)
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA GPU is required for evaluation but was not detected. "
+            "Please install a CUDA-enabled PyTorch build and ensure a compatible NVIDIA driver."
+        )
+    device = torch.device(f"cuda:{args.gpu}")
     print(f"Using device: {device}")
 
     # Load data (we only need the test set, but reuse loader)

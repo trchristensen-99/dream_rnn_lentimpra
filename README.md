@@ -80,10 +80,25 @@ This will:
 - Evaluate on the held-out test set
 - Save metrics (`performance.csv`) and predictions/targets (`*.npy`) in `results/eval_0/`.
 
+### 7. Check Environment (Optional but Recommended)
+
+Before long training runs, you can sanity-check your setup:
+
+```bash
+python check_env.py --data data/lentiMPRA_K562_activity_and_aleatoric_data.h5
+```
+
+This tests:
+- Python version
+- PyTorch & CUDA availability
+- GPU devices
+- Data file presence and basic HDF5 structure
+
 ## Requirements
 
 - Python 3.8+
-- PyTorch (with CUDA for GPU training)
+- **CUDA-capable GPU (required)** – the scripts will error if no GPU is available
+- PyTorch (CUDA build)
 - h5py, numpy, pandas, scipy, scikit-learn, pyyaml, tqdm
 
 See `requirements.txt` for package versions.

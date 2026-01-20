@@ -323,9 +323,13 @@ def main(args):
     print(f"Current working directory: {os.getcwd()}")
     print(f"Python executable: {sys.executable}")
     print(f"CUDA available: {torch.cuda.is_available()}")
-    if torch.cuda.is_available():
-        print(f"CUDA device count: {torch.cuda.device_count()}")
-        print(f"CUDA device name: {torch.cuda.get_device_name(0)}")
+    if not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA GPU is required for training but was not detected. "
+            "Please install a CUDA-enabled PyTorch build and ensure a compatible NVIDIA driver."
+        )
+    print(f"CUDA device count: {torch.cuda.device_count()}")
+    print(f"Using CUDA device index {args.gpu}: {torch.cuda.get_device_name(args.gpu)}")
     
     # Set random seeds - use model index to ensure different initializations
     seed = 42 + args.ix  # Different seed for each model
@@ -335,11 +339,11 @@ def main(args):
         torch.cuda.manual_seed(seed)
         torch.cuda.manual_seed_all(seed)
     
-    # Disable cuDNN to avoid version conflicts
+    # Disable cuDNN to avoid version conflicts (optional)
     torch.backends.cudnn.enabled = False
     
-    # Set device
-    device = torch.device(f"cuda:{args.gpu}" if torch.cuda.is_available() else "cpu")
+    # Set device (GPU only)
+    device = torch.device(f"cuda:{args.gpu}")
     print(f"Using device: {device}")
     
     # Load config
