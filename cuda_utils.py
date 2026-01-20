@@ -140,34 +140,56 @@ def check_and_fix_cuda_compatibility() -> bool:
                     if index_url:
                         print(f"  Installing PyTorch for CUDA {driver_version}...")
                         try:
-                            subprocess.run(
-                                [
-                                    sys.executable,
-                                    "-m",
-                                    "pip",
-                                    "uninstall",
-                                    "-y",
-                                    "torch",
-                                    "torchvision",
-                                    "torchaudio",
-                                ],
-                                check=True,
-                                capture_output=True,
-                            )
-                            subprocess.run(
-                                [
-                                    sys.executable,
-                                    "-m",
-                                    "pip",
-                                    "install",
-                                    "torch",
-                                    "torchvision",
-                                    "torchaudio",
-                                    "--index-url",
-                                    index_url,
-                                ],
-                                check=True,
-                            )
+                            # Try uv first, fall back to pip if not available
+                            try:
+                                subprocess.run(["uv", "--version"], check=True, capture_output=True)
+                                use_uv = True
+                            except (subprocess.CalledProcessError, FileNotFoundError):
+                                use_uv = False
+                            
+                            if use_uv:
+                                subprocess.run(
+                                    ["uv", "pip", "uninstall", "-y", "torch", "torchvision", "torchaudio"],
+                                    check=True,
+                                    capture_output=True,
+                                )
+                                subprocess.run(
+                                    [
+                                        "uv", "pip", "install",
+                                        "torch", "torchvision", "torchaudio",
+                                        "--index-url", index_url,
+                                    ],
+                                    check=True,
+                                )
+                            else:
+                                subprocess.run(
+                                    [
+                                        sys.executable,
+                                        "-m",
+                                        "pip",
+                                        "uninstall",
+                                        "-y",
+                                        "torch",
+                                        "torchvision",
+                                        "torchaudio",
+                                    ],
+                                    check=True,
+                                    capture_output=True,
+                                )
+                                subprocess.run(
+                                    [
+                                        sys.executable,
+                                        "-m",
+                                        "pip",
+                                        "install",
+                                        "torch",
+                                        "torchvision",
+                                        "torchaudio",
+                                        "--index-url",
+                                        index_url,
+                                    ],
+                                    check=True,
+                                )
                             print(f"  ✓ PyTorch reinstalled for CUDA {driver_version}")
                             print(f"  ⚠ Please restart the script for changes to take effect")
                             print(f"    The new PyTorch installation requires a fresh Python process")
@@ -201,20 +223,37 @@ def check_and_fix_cuda_compatibility() -> bool:
             if index_url:
                 print(f"  Installing PyTorch for CUDA {driver_version}...")
                 try:
-                    subprocess.run(
-                        [
-                            sys.executable,
-                            "-m",
-                            "pip",
-                            "install",
-                            "torch",
-                            "torchvision",
-                            "torchaudio",
-                            "--index-url",
-                            index_url,
-                        ],
-                        check=True,
-                    )
+                    # Try uv first, fall back to pip if not available
+                    try:
+                        subprocess.run(["uv", "--version"], check=True, capture_output=True)
+                        use_uv = True
+                    except (subprocess.CalledProcessError, FileNotFoundError):
+                        use_uv = False
+                    
+                    if use_uv:
+                        subprocess.run(
+                            [
+                                "uv", "pip", "install",
+                                "torch", "torchvision", "torchaudio",
+                                "--index-url", index_url,
+                            ],
+                            check=True,
+                        )
+                    else:
+                        subprocess.run(
+                            [
+                                sys.executable,
+                                "-m",
+                                "pip",
+                                "install",
+                                "torch",
+                                "torchvision",
+                                "torchaudio",
+                                "--index-url",
+                                index_url,
+                            ],
+                            check=True,
+                        )
                     print(f"  ✓ PyTorch installed")
                     # Re-check
                     import torch

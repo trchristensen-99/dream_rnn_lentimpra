@@ -87,6 +87,19 @@ Expected output:
 
 ### 1. Create Virtual Environment
 
+**Using uv (recommended - faster):**
+
+```bash
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Create virtual environment
+uv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+**Using pip (alternative):**
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
@@ -98,23 +111,39 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 The training script will automatically detect your CUDA driver version and install a compatible PyTorch build. You only need to install the other dependencies:
 
+**With uv:**
+```bash
+uv pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
+```
+
+**With pip:**
 ```bash
 pip install --upgrade pip
 pip install h5py numpy pandas scipy scikit-learn pyyaml tqdm
 ```
 
+The script will automatically use `uv` if available, otherwise fall back to `pip` for PyTorch installation.
+
 **Manual Installation (Optional):**
 
 If you prefer to install PyTorch manually, you can do so based on your CUDA version:
 
+**With uv:**
+```bash
+# For CUDA 12.1
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+
+# For CUDA 11.8
+uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+**With pip:**
 ```bash
 # For CUDA 12.1
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
 
 # For CUDA 11.8
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# For other versions, see https://pytorch.org/get-started/locally/
 ```
 
 The script will verify compatibility and install the correct version if needed.
