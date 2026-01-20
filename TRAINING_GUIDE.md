@@ -237,6 +237,28 @@ After training completes, the following files will be created in the output dire
 - `{ix}_targets.npy` - Test set ground truth
 - `{ix}_performance.csv` - Performance metrics (Pearson, Spearman, MSE)
 
+### Evaluation Script (Held-out Test Set)
+
+You can also evaluate a saved model checkpoint using the standalone evaluation script:
+
+```bash
+python evaluate_DREAM_RNN_lentiMPRA.py \
+    --data data/lentiMPRA_K562_activity_and_aleatoric_data.h5 \
+    --model results/training/0_model.pth \
+    --out results/eval_0 \
+    --downsample 1.0 \
+    --ix 0 \
+    --gpu 0
+```
+
+This script:
+- Loads the lentiMPRA data and a trained model
+- Evaluates on the test split
+- Writes:
+  - `performance.csv` (metrics)
+  - `predictions.npy` (test predictions)
+  - `targets.npy` (test targets)
+
 ### Performance Metrics
 
 The `*_performance.csv` file contains:

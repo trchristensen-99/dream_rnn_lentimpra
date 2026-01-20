@@ -63,6 +63,23 @@ python train_DREAM_RNN_lentiMPRA.py \
 
 **Training Time**: ~2.5-4 hours on GPU, ~10-20 hours on CPU
 
+### 6. Evaluate a Trained Model on the Test Set
+
+```bash
+python evaluate_DREAM_RNN_lentiMPRA.py \
+    --data data/lentiMPRA_K562_activity_and_aleatoric_data.h5 \
+    --model results/training/0_model.pth \
+    --out results/eval_0 \
+    --downsample 1.0 \
+    --ix 0 \
+    --gpu 0
+```
+
+This will:
+- Load the saved model
+- Evaluate on the held-out test set
+- Save metrics (`performance.csv`) and predictions/targets (`*.npy`) in `results/eval_0/`.
+
 ## Requirements
 
 - Python 3.8+
@@ -123,7 +140,6 @@ Modify `DREAM_RNN_lentiMPRA.yaml` to adjust:
 ## Documentation
 
 - **TRAINING_GUIDE.md** - Complete training guide with troubleshooting
-- **SETUP_GITHUB.md** - Instructions for setting up GitHub repository
 
 ## Data Source
 
