@@ -42,21 +42,16 @@ def main(args: argparse.Namespace) -> None:
     
     # If PyTorch was reinstalled, we need to restart
     if not cuda_fixed:
-        # Check if it's just a restart needed
-        try:
-            import torch
-            if torch.cuda.is_available():
-                cuda_fixed = True
-        except:
-            pass
-    
-    if not cuda_fixed:
-        raise RuntimeError(
-            "CUDA GPU is required for evaluation but was not detected or is incompatible.\n"
-            "The script attempted to fix compatibility issues automatically.\n"
-            "If PyTorch was reinstalled, please restart this script for changes to take effect.\n"
-            "If problems persist, please check your NVIDIA driver and PyTorch installation."
-        )
+        # Check if CUDA is actually available now (might have been fixed)
+        if torch.cuda.is_available():
+            cuda_fixed = True
+        else:
+            raise RuntimeError(
+                "CUDA GPU is required for evaluation but was not detected or is incompatible.\n"
+                "The script attempted to fix compatibility issues automatically.\n"
+                "If PyTorch was reinstalled, please restart this script for changes to take effect.\n"
+                "If problems persist, please check your NVIDIA driver and PyTorch installation."
+            )
     
     if not torch.cuda.is_available():
         raise RuntimeError(
