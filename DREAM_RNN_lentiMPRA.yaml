@@ -43,16 +43,19 @@ evoaug:
   desc: If true, train w/ EvoAug
   value: false
 
-# DREAM-RNN specific parameters
+# DREAM-RNN specific parameters (from DREAM paper notebook)
 dropout:
   desc: Dropout rate
   value: 0.2
 kernel_sizes:
-  desc: Kernel sizes for first layer block
-  value: [9, 15]  # DREAM paper: kernel sizes 9 and 15
+  desc: Kernel sizes for conv blocks
+  value: [9, 15]  # DREAM paper notebook: kernel sizes 9 and 15
 lstm_hidden_channels:
-  desc: Hidden dimensions for Bi-LSTM
-  value: 320  # DREAM paper: 320 hidden dimensions each (640 total)
+  desc: Hidden dimensions for Bi-LSTM (each direction)
+  value: 320  # DREAM paper notebook: 320 each direction (640 total bidirectional)
+out_channels:
+  desc: Output channels for first and core blocks
+  value: 320  # DREAM paper notebook: 320 total (160 per conv layer)
 
 # Uncertainty heads (aligns with DEGU paper and lentiMPRA protocol)
 aleatoric:

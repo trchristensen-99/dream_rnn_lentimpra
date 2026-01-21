@@ -44,18 +44,18 @@ class BHIFirstLayersBlock(nn.Module):
     """
     First layer block from BHI team's DREAM-RNN implementation.
 
-    Matches DREAM-CNN first layer block:
+    Matches DREAM paper notebook exactly:
     - Two Conv1D layers with kernel sizes 9 and 15
-    - 256 channels per Conv1D (512 total after concatenation)
+    - 160 channels per Conv1D (320 total after concatenation)
     - ReLU activation
     - Dropout rate 0.2
     """
-    def __init__(self, in_channels=4, out_channels=512, seqsize=230,
+    def __init__(self, in_channels=4, out_channels=320, seqsize=230,
                  kernel_sizes=[9, 15], pool_size=1, dropout=0.2):
         super(BHIFirstLayersBlock, self).__init__()
         self.out_channels = out_channels
         
-        # Two Conv1D layers with different kernel sizes
+        # Two Conv1D layers with different kernel sizes (out_channels//2 each)
         self.conv_blocks = nn.ModuleList([
             nn.Sequential(
                 nn.Conv1d(in_channels, out_channels//2, kernel_size=k, padding='same'),
@@ -78,12 +78,12 @@ class BHICoreBlock(nn.Module):
     """
     Core layer block from BHI team's DREAM-RNN implementation.
 
-    Matches DREAM-RNN core description:
+    Matches DREAM paper notebook exactly:
     - Bi-LSTM with 320 hidden dimensions in each direction (640 total)
     - Subsequent CNN block similar to first layer block (kernel sizes 9 and 15,
-      256 channels per Conv1D, ReLU, dropout 0.2)
+      160 channels per Conv1D = 320 total, ReLU, dropout 0.2)
     """
-    def __init__(self, in_channels=512, out_channels=512, seqsize=230,
+    def __init__(self, in_channels=320, out_channels=320, seqsize=230,
                  lstm_hidden_channels=320, kernel_sizes=[9, 15], pool_size=1,
                  dropout1=0.2, dropout2=0.5):
         super(BHICoreBlock, self).__init__()
@@ -93,7 +93,7 @@ class BHICoreBlock(nn.Module):
         self.lstm = nn.LSTM(in_channels, lstm_hidden_channels, 
                            bidirectional=True, batch_first=True)
         
-        # CNN blocks after LSTM (similar to first layer block)
+        # CNN blocks after LSTM (similar to first layer block, out_channels//2 each)
         self.conv_blocks = nn.ModuleList([
             nn.Sequential(
                 nn.Conv1d(lstm_hidden_channels * 2, out_channels//2, kernel_size=k, padding='same'),
@@ -122,21 +122,23 @@ class BHICoreBlock(nn.Module):
 
 class AutosomeFinalLayersBlock(nn.Module):
     """
-    Final layer block from @DREAM_paper tutorial.
+    Final layer block from DREAM paper notebook.
 
     Structural match to DREAM-CNN final block:
-    - Point-wise (1x1) convolution
+    - Point-wise (1x1) convolution to 256 channels
     - Channel-wise global average pooling
     - Final dense layer
 
     Note: We use a linear activation (Identity) instead of SoftMax because
     the task is regression (activity / aleatoric) trained with MSE.
+    The notebook outputs 1 value for DREAM challenge, but for lentiMPRA we output 2
+    (activity and aleatoric uncertainty).
     """
-    def __init__(self, in_channels=512, seqsize=230):
+    def __init__(self, in_channels=320, seqsize=230, num_outputs=2):
         super(AutosomeFinalLayersBlock, self).__init__()
         self.pointwise_conv = nn.Conv1d(in_channels, 256, kernel_size=1, padding='same')
         self.global_avg_pool = nn.AdaptiveAvgPool1d(1)
-        self.final_dense = nn.Linear(256, 2)  # 2 outputs for activity and aleatoric uncertainty
+        self.final_dense = nn.Linear(256, num_outputs)  # 2 outputs for lentiMPRA (activity + aleatoric)
         self.activation = nn.Identity()  # Linear activation for regression
     
     def forward(self, x):
@@ -149,25 +151,30 @@ class AutosomeFinalLayersBlock(nn.Module):
 
 class DREAM_RNN_LentiMPRA(nn.Module):
     """
-    DREAM-RNN model for lentiMPRA datasets following @DREAM_paper tutorial
+    DREAM-RNN model for lentiMPRA datasets following DREAM paper notebook exactly.
+    
+    Architecture (from notebook):
+    - First block: 320 channels (160 per conv with kernels 9, 15)
+    - Core block: Bi-LSTM (320 hidden per direction = 640 total), then 320 channels
+    - Final block: pointwise conv to 256, global avg pool, dense to num_outputs
     """
-    def __init__(self, in_channels=4, seqsize=230):
+    def __init__(self, in_channels=4, seqsize=230, num_outputs=2):
         super(DREAM_RNN_LentiMPRA, self).__init__()
         # First layer block: two Conv1D layers with kernel sizes 9 and 15,
-        # 256 channels each (512 total), ReLU, dropout 0.2
+        # 160 channels each (320 total), ReLU, dropout 0.2
         self.first_block = BHIFirstLayersBlock(
             in_channels=in_channels,
-            out_channels=512,
+            out_channels=320,  # 160 per conv, 320 total (matches notebook)
             seqsize=seqsize,
             kernel_sizes=[9, 15],
             pool_size=1,
             dropout=0.2,
         )
         # Core layer block: Bi-LSTM (320 hidden units per direction, 640 total),
-        # followed by CNN block similar to first layer block
+        # followed by CNN block similar to first layer block (320 channels total)
         self.core_block = BHICoreBlock(
-            in_channels=self.first_block.out_channels,
-            out_channels=512,
+            in_channels=self.first_block.out_channels,  # 320
+            out_channels=320,  # 160 per conv, 320 total (matches notebook)
             seqsize=self.first_block.infer_outseqsize(),
             lstm_hidden_channels=320,
             kernel_sizes=[9, 15],
@@ -175,10 +182,11 @@ class DREAM_RNN_LentiMPRA(nn.Module):
             dropout1=0.2,
             dropout2=0.5,
         )
-        # Final block: point-wise conv -> global average pool -> dense
+        # Final block: point-wise conv to 256 -> global average pool -> dense
         self.final_block = AutosomeFinalLayersBlock(
-            in_channels=self.core_block.out_channels,
+            in_channels=self.core_block.out_channels,  # 320
             seqsize=self.core_block.infer_outseqsize(),
+            num_outputs=num_outputs,  # 2 for lentiMPRA (activity + aleatoric)
         )
     
     def forward(self, x):
